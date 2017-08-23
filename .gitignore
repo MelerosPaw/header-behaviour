@@ -1,7 +1,5 @@
 build
 libs
-src/androidTest
-src/test
 *.iml
 /src/main/res/drawable/
 /src/main/res/values/styles.xml
