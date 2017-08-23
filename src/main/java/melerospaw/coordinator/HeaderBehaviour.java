@@ -19,7 +19,7 @@ import android.widget.TextView;
 public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
 
     private static final float EXPANDED_BOTTOM_MARGIN = 32f;
-    private static final float EXPANDED_X_POSITION = 32f;
+    private static final float EXPANDED_LEFT_MARGIN = 32f;
     private static final float TITLE_EXPANDED_TEXT_SIZE = 30f;
     private static final float TITLE_COLLAPSED_TEXT_SIZE = 20f;
 
@@ -69,7 +69,7 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
         titleCollapsedTextSize = titleCollapsedTextSize == -1 ?
                 TITLE_COLLAPSED_TEXT_SIZE : pxToDp(titleCollapsedTextSize, context);
         expandedStartMargin = expandedStartMargin == -1 ?
-                EXPANDED_X_POSITION : pxToDp(expandedStartMargin, context);
+                EXPANDED_LEFT_MARGIN : pxToDp(expandedStartMargin, context);
         expandedBottomMargin = expandedBottomMargin == -1 ?
                 EXPANDED_BOTTOM_MARGIN : pxToDp(expandedBottomMargin, context);
         subtitleExpandedTopMarginSpecified = subtitleExpandedTopMargin != -1;
