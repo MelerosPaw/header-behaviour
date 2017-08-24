@@ -6,14 +6,14 @@ ext {
 
     publishedGroupId = 'com.meleros-paw'
     libraryName = 'Header Behaviour'
-    artifact = 'app'
+    artifact = 'coordinator-behaviour'
 
     libraryDescription = 'Behaviour to attach to a Linear Layout coordinator layout.'
 
     siteUrl = 'https://github.com/Triodesabios/coordinator'
     gitUrl = 'https://github.com/Triodesabios/coordinator.git'
 
-    libraryVersion = '1.0.0-beta'
+    libraryVersion = '1.1.0-beta'
 
     developerId = 'Triodesabios'
     developerName = 'Juan José Melero'
