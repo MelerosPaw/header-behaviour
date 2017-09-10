@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.support.annotation.ColorInt;
+import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -13,8 +14,12 @@ import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
 
@@ -104,11 +109,39 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
     private void obtainViews(View dependency, LinearLayout child) {
         this.child = child;
         appBarLayout = (AppBarLayout) dependency;
-        CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) appBarLayout.getChildAt(0);
-        toolbar = (Toolbar) collapsingToolbarLayout.getChildAt(0);
-        toolbarTitleContainer = (LinearLayout) toolbar.getChildAt(0);
-        upperTitle = (TextView) child.getChildAt(0);
-        subtitle = (TextView) child.getChildAt(1);
+
+        CollapsingToolbarLayout collapsingToolbarLayout = findViewByClass(appBarLayout, CollapsingToolbarLayout.class);
+        if (collapsingToolbarLayout == null) {
+            illegalState();
+        } else {
+            collapsingToolbarLayout.setTitle(" ");
+            toolbar = findViewByClass(collapsingToolbarLayout, Toolbar.class);
+            if (toolbar == null) {
+                illegalState();
+            } else {
+                List<LinearLayout> linearLayouts = findViewsByClass(toolbar, LinearLayout.class);
+                for (LinearLayout linearLayout : linearLayouts){
+                    if (linearLayout.getChildAt(0) == null || !(linearLayout.getChildAt(0) instanceof TextView)
+                            || linearLayout.getChildAt(1) == null || !(linearLayout.getChildAt(1) instanceof TextView)) {
+                        illegalState();
+                    } else {
+                        toolbarTitleContainer = linearLayout;
+                    }
+                }
+
+                if (toolbarTitleContainer == null) {
+                    illegalState();
+                }
+            }
+        }
+
+        if (child.getChildAt(0) == null || !(child.getChildAt(0) instanceof TextView)
+                || child.getChildAt(1) == null || !(child.getChildAt(1) instanceof  TextView)) {
+            illegalState();
+        } else {
+            upperTitle = (TextView) child.getChildAt(0);
+            subtitle = (TextView) child.getChildAt(1);
+        }
     }
 
     private void changeTitleTextSize() {
@@ -217,5 +250,40 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
         Resources resources = context.getResources();
         DisplayMetrics metrics = resources.getDisplayMetrics();
         return px / ((float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    }
+
+    @Nullable
+    private <T extends View> T findViewByClass(ViewGroup viewGroup, Class clase){
+        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+            if (clase.isInstance(viewGroup.getChildAt(i))) {
+                return (T) viewGroup.getChildAt(i);
+            }
+        }
+        return null;
+    }
+
+    private <T extends View> List<T> findViewsByClass(ViewGroup viewGroup, Class clase){
+
+        List<T> views = new LinkedList<>();
+        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+            if (clase.isInstance(viewGroup.getChildAt(i))) {
+                views.add((T) viewGroup.getChildAt(i));
+            }
+        }
+        return views;
+    }
+
+    private void illegalState() throws IllegalStateException {
+        throw new IllegalStateException(
+                "Using HeaderBehaviour requires the following view structure xml:\n" +
+                "  CoordinatorLayout\n"+
+                "    +--- AppBarLayout\n" +
+                "    |    +--- Toolbar\n" +
+                "    |    \\--- LinearLayout\n" +
+                "    |         +--- TextView (title)\n" +
+                "    |         \\--- TextView (subtitle)\n" +
+                "    \\--- LinearLayout\n" +
+                "         +--- TextView (the same title)\n" +
+                "         \\--- TextView (the same subitle)");
     }
 }
