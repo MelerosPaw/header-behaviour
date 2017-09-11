@@ -25,8 +25,6 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
 
     private static final float EXPANDED_BOTTOM_MARGIN = 32f;
     private static final float EXPANDED_LEFT_MARGIN = 32f;
-    private static final float TITLE_EXPANDED_TEXT_SIZE = 30f;
-    private static final float TITLE_COLLAPSED_TEXT_SIZE = 20f;
 
     private AppBarLayout appBarLayout;
     private Toolbar toolbar;
