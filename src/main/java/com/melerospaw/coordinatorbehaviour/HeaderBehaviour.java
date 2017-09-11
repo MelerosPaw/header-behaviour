@@ -32,20 +32,22 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
     private Toolbar toolbar;
     private LinearLayout toolbarTitleContainer;
     private LinearLayout child;
-    private TextView upperTitle;
+    private TextView title;
     private TextView subtitle;
 
     private float expandedStartMargin;
     private float expandedBottomMargin;
-    private float titleExpandedTextSize;
-    private float titleCollapsedTextSize;
+    private float expandedTitleTextSize;
+    private float expandedSubtitleTextSize;
+    private float collapsedTitleTextSize;
+    private float collapsedSubtitleTextSize;
     private float subtitleExpandedTopMargin;
     private boolean subtitleExpandedTopMarginSpecified;
     private boolean interpolateTextColor;
-    @ColorInt private int titleCollapsedTextColor;
-    @ColorInt private int titleExpandedTextColor;
-    @ColorInt private int subtitleCollapsedTextColor;
-    @ColorInt private int subtitleExpandedTextColor;
+    @ColorInt private int collapsedTitleTextColor;
+    @ColorInt private int expandedTitleTextColor;
+    @ColorInt private int collapsedSubtitleTextColor;
+    @ColorInt private int expandedSubtitleTextColor;
 
     public HeaderBehaviour() {
         super();
@@ -54,8 +56,10 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
     public HeaderBehaviour(Context context, AttributeSet attrs) {
         super(context, attrs);
         TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.HeaderBehaviour);
-        titleExpandedTextSize = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_titleMaxTextSize, -1);
-        titleCollapsedTextSize = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_titleMinTextSize, -1);
+        expandedTitleTextSize = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_expandedTitleTextSize, -1);
+        expandedSubtitleTextSize = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_expandedSubtitleTextSize, -1);
+        collapsedTitleTextSize = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_collapsedTitleTextSize, -1);
+        collapsedSubtitleTextSize = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_collapsedSubtitleTextSize, -1);
         expandedStartMargin = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_expandedStartMargin, -1);
         expandedBottomMargin = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_expandedBottomMargin, -1);
         subtitleExpandedTopMargin = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_expandedSubtitleTopMargin, -1);
@@ -63,16 +67,20 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
                 ContextCompat.getColor(context, android.R.color.white));
         @ColorInt int expandedTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_expandedTextColor,
                 ContextCompat.getColor(context, android.R.color.black));
-        titleCollapsedTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_collapsedTitleColor, collapsedTextColor);
-        titleExpandedTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_expandedTitleColor, expandedTextColor);
-        subtitleCollapsedTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_collapsedSubitleColor, collapsedTextColor);
-        subtitleExpandedTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_expandedSubtitleColor, expandedTextColor);
+        collapsedTitleTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_collapsedTitleColor, collapsedTextColor);
+        expandedTitleTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_expandedTitleColor, expandedTextColor);
+        collapsedSubtitleTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_collapsedSubtitleColor, collapsedTextColor);
+        expandedSubtitleTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_expandedSubtitleColor, expandedTextColor);
         interpolateTextColor = attributes.getBoolean(R.styleable.HeaderBehaviour_behaviour_interpolateTextColor, true);
 
-        titleExpandedTextSize = titleExpandedTextSize == -1 ?
-                TITLE_EXPANDED_TEXT_SIZE : pxToDp(titleExpandedTextSize, context);
-        titleCollapsedTextSize = titleCollapsedTextSize == -1 ?
-                TITLE_COLLAPSED_TEXT_SIZE : pxToDp(titleCollapsedTextSize, context);
+        expandedTitleTextSize = expandedTitleTextSize != -1 ?
+                pxToDp(expandedTitleTextSize, context) : -1;
+        collapsedTitleTextSize = collapsedTitleTextSize != -1 ?
+                pxToDp(collapsedTitleTextSize, context) : -1;
+        expandedSubtitleTextSize = expandedSubtitleTextSize != -1 ?
+                pxToDp(expandedSubtitleTextSize, context) : -1;
+        collapsedSubtitleTextSize = collapsedSubtitleTextSize != -1 ?
+                pxToDp(collapsedSubtitleTextSize, context) : -1;
         expandedStartMargin = expandedStartMargin == -1 ?
                 EXPANDED_LEFT_MARGIN : pxToDp(expandedStartMargin, context);
         expandedBottomMargin = expandedBottomMargin == -1 ?
@@ -98,6 +106,7 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
 
         obtainViews(dependency, child);
         changeTitleTextSize();
+        changeSubtitleTextSize();
         changeSubtitleMarginTop();
         changeTitleColor();
         changePosition();
@@ -131,25 +140,57 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
 
                 if (toolbarTitleContainer == null) {
                     illegalState();
+                } else {
+                    if (collapsedTitleTextSize == -1) {
+                        collapsedTitleTextSize = pxToDp(((TextView) toolbarTitleContainer.getChildAt(0)).getTextSize(),
+                                toolbarTitleContainer.getContext());
+                    } else {
+                        ((TextView) toolbarTitleContainer.getChildAt(0)).setTextSize(collapsedTitleTextSize);
+                    }
+
+                    if (collapsedSubtitleTextSize == -1) {
+                        collapsedSubtitleTextSize = pxToDp(((TextView) toolbarTitleContainer.getChildAt(1)).getTextSize(),
+                                toolbarTitleContainer.getContext());
+                    } else {
+                        ((TextView) toolbarTitleContainer.getChildAt(1)).setTextSize(collapsedSubtitleTextSize);
+                    }
                 }
             }
         }
 
         if (child.getChildAt(0) == null || !(child.getChildAt(0) instanceof TextView)
-                || child.getChildAt(1) == null || !(child.getChildAt(1) instanceof  TextView)) {
+                || child.getChildAt(1) == null || !(child.getChildAt(1) instanceof TextView)) {
             illegalState();
         } else {
-            upperTitle = (TextView) child.getChildAt(0);
+            title = (TextView) child.getChildAt(0);
             subtitle = (TextView) child.getChildAt(1);
+            if (expandedTitleTextSize == -1) {
+                expandedTitleTextSize = pxToDp(title.getTextSize(), title.getContext());
+            } else {
+                title.setTextSize(expandedTitleTextSize);
+            }
+            if (expandedSubtitleTextSize == -1) {
+                expandedSubtitleTextSize = pxToDp(subtitle.getTextSize(), subtitle.getContext());
+            } else {
+                subtitle.setTextSize(expandedSubtitleTextSize);
+            }
         }
     }
 
     private void changeTitleTextSize() {
         // Averigua el rango de tamaño de letra entre el tamaño mayor y el menor
-        float textSizeRange = titleExpandedTextSize - titleCollapsedTextSize;
+        float textSizeRange = expandedTitleTextSize - collapsedTitleTextSize;
         float textSizeDifference = textSizeRange * getYScrolledPercentage() / 100;
-        float proportionedTextSize = titleCollapsedTextSize + textSizeDifference;
-        upperTitle.setTextSize(proportionedTextSize);
+        float proportionedTextSize = collapsedTitleTextSize + textSizeDifference;
+        title.setTextSize(proportionedTextSize);
+    }
+
+    private void changeSubtitleTextSize() {
+        // Averigua el rango de tamaño de letra entre el tamaño mayor y el menor
+        float textSizeRange = expandedSubtitleTextSize - collapsedSubtitleTextSize;
+        float textSizeDifference = textSizeRange * getYScrolledPercentage() / 100;
+        float proportionedTextSize = collapsedSubtitleTextSize + textSizeDifference;
+        subtitle.setTextSize(proportionedTextSize);
     }
 
     private void changeSubtitleMarginTop() {
@@ -162,10 +203,10 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
     private void changeTitleColor() {
         if (interpolateTextColor) {
             @ColorInt int titleColor = (Integer) new ArgbEvaluator().evaluate(
-                    getYScrolledPercentage() / 100, titleCollapsedTextColor, titleExpandedTextColor);
+                    getYScrolledPercentage() / 100, collapsedTitleTextColor, expandedTitleTextColor);
             @ColorInt int subtitleColor = (Integer) new ArgbEvaluator().evaluate(
-                    getYScrolledPercentage() / 100, subtitleCollapsedTextColor, subtitleExpandedTextColor);
-            upperTitle.setTextColor(titleColor);
+                    getYScrolledPercentage() / 100, collapsedSubtitleTextColor, expandedSubtitleTextColor);
+            title.setTextColor(titleColor);
             subtitle.setTextColor(subtitleColor);
         }
     }
@@ -225,12 +266,6 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
         return ((yScrolledPixels * 100) / (float) appBarLayout.getTotalScrollRange());
     }
 
-    private static float dpToPixels(float dp, Context context) {
-        Resources resources = context.getResources();
-        DisplayMetrics metrics = resources.getDisplayMetrics();
-        return dp * ((float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
-    }
-
     private void toggleToolbarTitleVisibility() {
         if (isToolbarCollapsed(appBarLayout)) {
             toolbarTitleContainer.setVisibility(View.VISIBLE);
@@ -244,6 +279,12 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
         // -rangoTotalScroll. Es decir, que si la AppBar tiene una distancia de scroll de 200,
         // cuando la Toolbar está contraída, el borde superior está a -200.
         return -appBarLayout.getTop() == appBarLayout.getTotalScrollRange();
+    }
+
+    private static float dpToPixels(float dp, Context context) {
+        Resources resources = context.getResources();
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        return dp * ((float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
     }
 
     private static float pxToDp(float px, Context context) {

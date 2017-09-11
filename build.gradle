@@ -38,7 +38,7 @@ ext {
     siteUrl = 'https://github.com/Triodesabios/header-behaviour'
     gitUrl = 'https://github.com/Triodesabios/header-behaviour.git'
 
-    libraryVersion = '1.2.0-beta'
+    libraryVersion = '1.2.1-beta'
 
     developerId = 'Triodesabios'
     developerName = 'Juan José Melero'

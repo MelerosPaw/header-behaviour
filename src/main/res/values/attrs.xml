@@ -4,13 +4,15 @@
         <attr name="behaviour_expandedSubtitleTopMargin" format="dimension"/>
         <attr name="behaviour_expandedStartMargin" format="dimension"/>
         <attr name="behaviour_expandedBottomMargin" format="dimension"/>
-        <attr name="behaviour_titleMaxTextSize" format="dimension"/>
-        <attr name="behaviour_titleMinTextSize" format="dimension"/>
+        <attr name="behaviour_expandedTitleTextSize" format="dimension"/>
+        <attr name="behaviour_collapsedTitleTextSize" format="dimension"/>
+        <attr name="behaviour_expandedSubtitleTextSize" format="dimension"/>
+        <attr name="behaviour_collapsedSubtitleTextSize" format="dimension"/>
         <attr name="behaviour_expandedTitleColor" format="color"/>
         <attr name="behaviour_expandedSubtitleColor" format="color"/>
         <attr name="behaviour_expandedTextColor" format="color"/>
         <attr name="behaviour_collapsedTitleColor" format="color"/>
-        <attr name="behaviour_collapsedSubitleColor" format="color"/>
+        <attr name="behaviour_collapsedSubtitleColor" format="color"/>
         <attr name="behaviour_collapsedTextColor" format="color"/>
         <attr name="behaviour_interpolateTextColor" format="boolean"/>
     </declare-styleable>
