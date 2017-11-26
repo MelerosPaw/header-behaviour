@@ -26,7 +26,8 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
     private static final float EXPANDED_BOTTOM_MARGIN = 32f;
     private static final float EXPANDED_LEFT_MARGIN = 32f;
 
-    private AppBarLayout appBarLayout;
+    private CoordinatorLayout parent;
+    private AppBarLayout dependency;
     private Toolbar toolbar;
     private LinearLayout toolbarTitleContainer;
     private LinearLayout child;
@@ -39,8 +40,8 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
     private float expandedSubtitleTextSize;
     private float collapsedTitleTextSize;
     private float collapsedSubtitleTextSize;
-    private float subtitleExpandedTopMargin;
-    private boolean subtitleExpandedTopMarginSpecified;
+    private float expandedSpaceBetweenLines;
+    private boolean isSpaceBetweenLinesEnabled;
     private boolean interpolateTextColor;
     @ColorInt private int collapsedTitleTextColor;
     @ColorInt private int expandedTitleTextColor;
@@ -60,7 +61,7 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
         collapsedSubtitleTextSize = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_collapsedSubtitleTextSize, -1);
         expandedStartMargin = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_expandedStartMargin, -1);
         expandedBottomMargin = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_expandedBottomMargin, -1);
-        subtitleExpandedTopMargin = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_expandedSubtitleTopMargin, -1);
+        expandedSpaceBetweenLines = attributes.getDimension(R.styleable.HeaderBehaviour_behaviour_expandedSpaceBetweenLines, -1);
         @ColorInt int collapsedTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_collapsedTextColor,
                 ContextCompat.getColor(context, android.R.color.white));
         @ColorInt int expandedTextColor = attributes.getColor(R.styleable.HeaderBehaviour_behaviour_expandedTextColor,
@@ -83,7 +84,7 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
                 EXPANDED_LEFT_MARGIN : pxToDp(expandedStartMargin, context);
         expandedBottomMargin = expandedBottomMargin == -1 ?
                 EXPANDED_BOTTOM_MARGIN : pxToDp(expandedBottomMargin, context);
-        subtitleExpandedTopMarginSpecified = subtitleExpandedTopMargin != -1;
+        isSpaceBetweenLinesEnabled = expandedSpaceBetweenLines != -1;
 
         attributes.recycle();
     }
@@ -97,47 +98,47 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
 
     @Override
     public boolean onDependentViewChanged(CoordinatorLayout parent, LinearLayout child, View dependency) {
-        // Qué tienes que hacer cuando la vista cambies Annoi
+        // Qué tienes que hacer cuando la vista cambie
         // Un behaviour solo se puede asignar a hijos directos del CoordinatorLayout.
         // El texto del título de la AppBar no cambia aunque se mueva con el CollapsingToolbarLayout
         // El CollapsingToolbarLayout tampoco se mueve nunca. Su tamaño siempre es extendido.
+        this.parent = parent;
+        this.child = child;
+        this.dependency = (AppBarLayout) dependency;
 
-        obtainViews(dependency, child);
+        obtainViews();
         changeTitleTextSize();
         changeSubtitleTextSize();
         changeSubtitleMarginTop();
-        changeTitleColor();
+        changeTextColor();
         changePosition();
         toggleToolbarTitleVisibility();
 
         return true;
     }
 
-    private void obtainViews(View dependency, LinearLayout child) {
-        this.child = child;
-        appBarLayout = (AppBarLayout) dependency;
-
-        CollapsingToolbarLayout collapsingToolbarLayout = findViewByClass(appBarLayout, CollapsingToolbarLayout.class);
+    private void obtainViews() {
+        CollapsingToolbarLayout collapsingToolbarLayout = findViewByClass(this.dependency, CollapsingToolbarLayout.class);
         if (collapsingToolbarLayout == null) {
-            illegalState();
+            illegalStateException();
         } else {
             collapsingToolbarLayout.setTitle(" ");
             toolbar = findViewByClass(collapsingToolbarLayout, Toolbar.class);
             if (toolbar == null) {
-                illegalState();
+                illegalStateException();
             } else {
                 List<LinearLayout> linearLayouts = findViewsByClass(toolbar, LinearLayout.class);
-                for (LinearLayout linearLayout : linearLayouts){
+                for (LinearLayout linearLayout : linearLayouts) {
                     if (linearLayout.getChildAt(0) == null || !(linearLayout.getChildAt(0) instanceof TextView)
                             || linearLayout.getChildAt(1) == null || !(linearLayout.getChildAt(1) instanceof TextView)) {
-                        illegalState();
+                        illegalStateException();
                     } else {
                         toolbarTitleContainer = linearLayout;
                     }
                 }
 
                 if (toolbarTitleContainer == null) {
-                    illegalState();
+                    illegalStateException();
                 } else {
                     if (collapsedTitleTextSize == -1) {
                         collapsedTitleTextSize = pxToDp(((TextView) toolbarTitleContainer.getChildAt(0)).getTextSize(),
@@ -158,7 +159,7 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
 
         if (child.getChildAt(0) == null || !(child.getChildAt(0) instanceof TextView)
                 || child.getChildAt(1) == null || !(child.getChildAt(1) instanceof TextView)) {
-            illegalState();
+            illegalStateException();
         } else {
             title = (TextView) child.getChildAt(0);
             subtitle = (TextView) child.getChildAt(1);
@@ -192,13 +193,13 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
     }
 
     private void changeSubtitleMarginTop() {
-        if (subtitleExpandedTopMarginSpecified) {
+        if (isSpaceBetweenLinesEnabled) {
             LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) subtitle.getLayoutParams();
-            params.topMargin = (int) (getYScrolledPercentage() * subtitleExpandedTopMargin / 100);
+            params.topMargin = (int) (getYScrolledPercentage() * expandedSpaceBetweenLines / 100);
         }
     }
 
-    private void changeTitleColor() {
+    private void changeTextColor() {
         if (interpolateTextColor) {
             @ColorInt int titleColor = (Integer) new ArgbEvaluator().evaluate(
                     getYScrolledPercentage() / 100, collapsedTitleTextColor, expandedTitleTextColor);
@@ -216,7 +217,7 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
 
     private float getYPosition() {
         child.measure(View.MeasureSpec.UNSPECIFIED, child.getHeight());
-        return appBarLayout.getBottom()
+        return dependency.getBottom()
                 - child.getMeasuredHeight()
                 - getToolbarTitleBottomMargin()
                 - getBottomDistancePercentage();
@@ -248,7 +249,7 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
 
         // Averigua la distancia total de scroll horizontal
         float collapsedXPosition = toolbarTitleContainer.getX();
-        float expandedXPosition = dpToPixels(expandedStartMargin, appBarLayout.getContext());
+        float expandedXPosition = dpToPixels(expandedStartMargin, dependency.getContext());
         float totalXScrollRange = collapsedXPosition - expandedXPosition;
 
         // Averigua el porcentaje de distancia vertical recorrido
@@ -260,12 +261,12 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
     }
 
     private float getYScrolledPercentage() {
-        int yScrolledPixels = appBarLayout.getTotalScrollRange() + appBarLayout.getTop();
-        return ((yScrolledPixels * 100) / (float) appBarLayout.getTotalScrollRange());
+        int yScrolledPixels = dependency.getTotalScrollRange() + dependency.getTop();
+        return ((yScrolledPixels * 100) / (float) dependency.getTotalScrollRange());
     }
 
     private void toggleToolbarTitleVisibility() {
-        if (isToolbarCollapsed(appBarLayout)) {
+        if (isToolbarCollapsed(dependency)) {
             toolbarTitleContainer.setVisibility(View.VISIBLE);
         } else {
             toolbarTitleContainer.setVisibility(View.GONE);
@@ -312,7 +313,7 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
         return views;
     }
 
-    private void illegalState() throws IllegalStateException {
+    private void illegalStateException() {
         throw new IllegalStateException(
                 "Using HeaderBehaviour requires the following view structure xml:\n" +
                 "  CoordinatorLayout\n"+
@@ -324,5 +325,70 @@ public class HeaderBehaviour extends CoordinatorLayout.Behavior<LinearLayout> {
                 "    \\--- LinearLayout\n" +
                 "         +--- TextView (the same title)\n" +
                 "         \\--- TextView (the same subitle)");
+    }
+
+    public void setExpandedStartMargin(float expandedStartMargin) {
+        this.expandedStartMargin = expandedStartMargin;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setExpandedBottomMargin(float expandedBottomMargin) {
+        this.expandedBottomMargin = expandedBottomMargin;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setExpandedTitleTextSize(float expandedTitleTextSize) {
+        this.expandedTitleTextSize = expandedTitleTextSize;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setExpandedSubtitleTextSize(float expandedSubtitleTextSize) {
+        this.expandedSubtitleTextSize = expandedSubtitleTextSize;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setCollapsedTitleTextSize(float collapsedTitleTextSize) {
+        this.collapsedTitleTextSize = collapsedTitleTextSize;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setCollapsedSubtitleTextSize(float collapsedSubtitleTextSize) {
+        this.collapsedSubtitleTextSize = collapsedSubtitleTextSize;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setExpandedSpaceBetweenLines(float expandedSpaceBetweenLines) {
+        this.expandedSpaceBetweenLines = expandedSpaceBetweenLines;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void enableSpaceBetweenLines(boolean enableSpaceBetweenLines) {
+        this.isSpaceBetweenLinesEnabled = enableSpaceBetweenLines;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setInterpolateTextColor(boolean interpolateTextColor) {
+        this.interpolateTextColor = interpolateTextColor;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setCollapsedTitleTextColor(int collapsedTitleTextColor) {
+        this.collapsedTitleTextColor = collapsedTitleTextColor;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setExpandedTitleTextColor(int expandedTitleTextColor) {
+        this.expandedTitleTextColor = expandedTitleTextColor;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setCollapsedSubtitleTextColor(int collapsedSubtitleTextColor) {
+        this.collapsedSubtitleTextColor = collapsedSubtitleTextColor;
+        onDependentViewChanged(parent, child, dependency);
+    }
+
+    public void setExpandedSubtitleTextColor(int expandedSubtitleTextColor) {
+        this.expandedSubtitleTextColor = expandedSubtitleTextColor;
+        onDependentViewChanged(parent, child, dependency);
     }
 }
